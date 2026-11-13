@@ -4,6 +4,11 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, fonts } from "../../constants/theme";
 import { Centre, naira } from "../../lib/find/centres";
 
+function openLabel(open: boolean | null) {
+  return open === null ? "Hours not listed" : open ? "Open now" : "Closed";
+}
+const openDot = (open: boolean | null) => (open === null ? "#C9C6D8" : open ? "#8FE3C8" : "#F59E9E");
+
 type Props = { centre: Centre; width: number; selected: boolean; onSelect: () => void; onBook: () => void };
 
 /** Bottom card on the map: photo area, name, services, price and Book. */
@@ -17,21 +22,30 @@ export function CentreCard({ centre, width, selected, onSelect, onBook }: Props)
           <Ionicons name="heart" size={20} color="#C2185B" />
         </View>
         <View style={styles.openPill}>
-          <View style={[styles.dot, { backgroundColor: centre.open ? "#8FE3C8" : "#F59E9E" }]} />
-          <Text style={styles.openText}>{centre.open ? "Open now" : "Closed"}</Text>
+          <View style={[styles.dot, { backgroundColor: openDot(centre.open) }]} />
+          <Text style={styles.openText}>{openLabel(centre.open)}</Text>
         </View>
       </View>
       <View style={styles.body}>
         <Text style={styles.name} numberOfLines={1}>{centre.name}</Text>
         <Text style={styles.services} numberOfLines={1}>{centre.services.join(" · ")}</Text>
-        <View style={styles.tagRow}>{centre.nhis ? <Text style={styles.tag}>NHIS accepted</Text> : <View style={{ height: 26 }} />}</View>
+        <View style={styles.tagRow}>
+          {centre.nhis ? <Text style={styles.tag}>NHIS accepted</Text> : <Text style={styles.address} numberOfLines={1}>{centre.address}</Text>}
+        </View>
       </View>
       </Pressable>
       <View style={styles.footer}>
-        <View>
-          <Text style={styles.price}>{naira(centre.price)}</Text>
-          <Text style={styles.pay}>PAY AT CENTRE</Text>
-        </View>
+        {centre.price ? (
+          <View>
+            <Text style={styles.price}>{naira(centre.price)}</Text>
+            <Text style={styles.pay}>PAY AT CENTRE</Text>
+          </View>
+        ) : (
+          <View style={{ flex: 1, paddingRight: 12 }}>
+            <Text style={styles.hours} numberOfLines={1}>{centre.hours ?? "Call to confirm hours"}</Text>
+            <Text style={styles.pay} numberOfLines={1}>{centre.phone ?? "REQUEST AN APPOINTMENT"}</Text>
+          </View>
+        )}
         <Pressable accessibilityRole="button" accessibilityLabel={`Book ${centre.name}`} onPress={onBook} style={styles.book}>
           <Text style={styles.bookText}>Book</Text>
         </Pressable>
@@ -55,6 +69,8 @@ const styles = StyleSheet.create({
   tag: { fontFamily: fonts.semibold, fontSize: 12, color: colors.trackSoft, backgroundColor: "#DDD6F7", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, overflow: "hidden" },
   footer: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 12, marginTop: 10, borderTopWidth: 1, borderTopColor: "#EEE9FB", borderStyle: "dashed" },
   price: { fontFamily: fonts.bold, fontSize: 22, color: colors.trackInk },
+  address: { fontFamily: fonts.regular, fontSize: 13, color: "#8A859F" },
+  hours: { fontFamily: fonts.semibold, fontSize: 14, color: colors.trackInk },
   pay: { fontFamily: fonts.semibold, fontSize: 11, letterSpacing: 0.5, color: "#8A859F" },
   book: { height: 40, paddingHorizontal: 28, borderRadius: 20, backgroundColor: colors.purple, alignItems: "center", justifyContent: "center" },
   bookText: { fontFamily: fonts.bold, fontSize: 15, color: colors.white },

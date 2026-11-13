@@ -24,6 +24,8 @@ export type AppointmentRequest = {
   centreName: string;
   /** Human-readable slot, e.g. "Today, 7:00 PM". */
   slot: string;
+  /** Id of the request on the NCSR server, when it was sent while signed in. */
+  serverId?: number;
   requestedAt: string; // ISO
 };
 

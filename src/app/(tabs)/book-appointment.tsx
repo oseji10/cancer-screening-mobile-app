@@ -4,6 +4,10 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { PillButton } from "../../components/PillButton";
+import { createAppointment } from "../../lib/api/appointments";
+import { errorMessage } from "../../lib/api/client";
+import { useAuth } from "../../lib/auth/AuthContext";
+import { config } from "../../lib/config";
 import { TrackHeader } from "../../components/track/TrackHeader";
 import { colors, fonts } from "../../constants/theme";
 import { findCentre, naira } from "../../lib/find/centres";
@@ -11,12 +15,21 @@ import { useTrack } from "../../lib/track/TrackContext";
 
 const BLUE = "#1B6FE5";
 const TIMES = ["7:00 PM", "7:30 PM", "8:00 PM"];
+const TIME_24: Record<string, string> = { "7:00 PM": "19:00", "7:30 PM": "19:30", "8:00 PM": "20:00" };
 const DAY_NAMES = ["Today", "Tomorrow", "Next day"];
 
 function dayDate(offset: number): string {
   const d = new Date();
   d.setDate(d.getDate() + offset);
   return d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
+}
+
+/** Local calendar date as YYYY-MM-DD. */
+function isoDay(offset: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + offset);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
 function Option({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
@@ -33,13 +46,45 @@ export default function BookAppointment() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const centre = findCentre(id);
   const { requestAppointment } = useTrack();
+  const { signedIn } = useAuth();
   const [day, setDay] = useState<number | null>(null);
   const [time, setTime] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const ready = centre !== undefined && day !== null && time !== null;
+  // Booking needs an account so the centre and a navigator have a number to reach.
+  const needsAccount = config.hasBackend && !signedIn;
 
-  const send = () => {
+  const send = async () => {
     if (!centre || day === null || !time) return;
-    requestAppointment({ centreId: centre.id, centreName: centre.name, slot: `${DAY_NAMES[day]}, ${time}` });
+
+    if (needsAccount) {
+      router.push({ pathname: "/account/sign-in", params: { next: `/book-appointment?id=${centre.id}` } } as unknown as Href);
+      return;
+    }
+
+    setError(null);
+    let serverId: number | undefined;
+
+    if (config.hasBackend) {
+      setSending(true);
+      try {
+        const created = await createAppointment({
+          facilityId: Number(centre.id),
+          date: isoDay(day),
+          time: TIME_24[time] ?? "19:00",
+          type: "general",
+        });
+        serverId = created.id;
+      } catch (e) {
+        setError(errorMessage(e));
+        setSending(false);
+        return;
+      }
+      setSending(false);
+    }
+
+    requestAppointment({ centreId: centre.id, centreName: centre.name, slot: `${DAY_NAMES[day]}, ${time}`, serverId });
     router.replace("/request-sent" as Href);
   };
 
@@ -78,8 +123,8 @@ export default function BookAppointment() {
           {ready && centre ? (
             <View style={{ gap: 6 }}>
               <Text style={styles.sumMain}>{dayDate(day!)} at {time}</Text>
-              <Text style={styles.sumSub}>{centre.name} · {centre.services.join(", ")}</Text>
-              <Text style={styles.sumSub}>{naira(centre.price)} · pay at centre</Text>
+              <Text style={styles.sumSub}>{centre.name}{centre.services.length ? ` · ${centre.services.join(", ")}` : ""}</Text>
+              {centre.price ? <Text style={styles.sumSub}>{naira(centre.price)} · pay at centre</Text> : null}
             </View>
           ) : (
             <View style={{ gap: 14, marginTop: 4 }}>
@@ -90,7 +135,15 @@ export default function BookAppointment() {
         </View>
       </ScrollView>
       <View style={styles.footer}>
-        <PillButton label="Book Appointment" disabled={!ready} onPress={send} />
+        {needsAccount && ready ? (
+          <Text style={styles.note}>Create a free account or sign in so the centre can reach you about this request.</Text>
+        ) : null}
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+        <PillButton
+          label={sending ? "Sending…" : needsAccount ? "Sign in to book" : "Book Appointment"}
+          disabled={!ready || sending}
+          onPress={() => void send()}
+        />
       </View>
     </SafeAreaView>
   );
@@ -114,5 +167,7 @@ const styles = StyleSheet.create({
   bar: { height: 10, borderRadius: 5, backgroundColor: "#ECECF0" },
   sumMain: { fontFamily: fonts.semibold, fontSize: 17, color: "#111" },
   sumSub: { fontFamily: fonts.regular, fontSize: 14, color: "#5F5A7A" },
-  footer: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 },
+  footer: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12, gap: 8 },
+  note: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 18, color: "#5F5A7A", textAlign: "center" },
+  error: { fontFamily: fonts.medium, fontSize: 14, color: "#C23B3B", textAlign: "center" },
 });

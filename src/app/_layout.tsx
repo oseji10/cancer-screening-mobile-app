@@ -42,13 +42,13 @@ export default function RootLayout() {
   if (!fontsLoaded && !fontError) return null;
 
   return (
-    <AuthProvider>
-      <ProfileProvider>
+    <ProfileProvider>
+      <AuthProvider>
         <TrackProvider>
           <StatusBar style="dark" />
           <Stack screenOptions={{ headerShown: false }} />
         </TrackProvider>
-      </ProfileProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </ProfileProvider>
   );
 }

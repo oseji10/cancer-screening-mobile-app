@@ -95,6 +95,9 @@ export default function OnboardingSlides() {
           <Pressable accessibilityRole="button" onPress={toSetup} hitSlop={12}>
             <Text style={styles.skip}>Skip</Text>
           </Pressable>
+          <Pressable accessibilityRole="button" onPress={() => router.push("/account/sign-in" as Href)} hitSlop={12}>
+            <Text style={styles.signIn}>I already have an account</Text>
+          </Pressable>
         </View>
       </View>
     </View>
@@ -121,5 +124,6 @@ const styles = StyleSheet.create({
   title: { fontFamily: fonts.semibold, fontSize: 28, lineHeight: 36, color: colors.black },
   body: { fontFamily: fonts.regular, fontSize: 15, lineHeight: 24, color: colors.black },
   actions: { gap: 14, alignItems: "center" },
+  signIn: { fontFamily: fonts.semibold, fontSize: 15, lineHeight: 23, color: colors.purple },
   skip: { fontFamily: fonts.nunito, fontSize: 15, lineHeight: 23, color: colors.skipLight },
 });

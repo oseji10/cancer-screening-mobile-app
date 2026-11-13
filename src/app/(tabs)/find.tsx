@@ -9,10 +9,11 @@ import MapCanvas from "../../components/find/MapCanvas";
 import type { MapCentre } from "../../components/find/mapTypes";
 import { PillButton } from "../../components/PillButton";
 import { colors, fonts } from "../../constants/theme";
-import { CENTRES, distanceKm } from "../../lib/find/centres";
+import { distanceKm } from "../../lib/find/centres";
+import { useCentres } from "../../lib/find/useCentres";
 import { useUserLocation } from "../../lib/find/useUserLocation";
 
-const CHIPS = ["Mammogram", "Ultrasound", "Clinical exam", "NHIS accepted", "Open now"];
+const OPEN_NOW = "Open now";
 
 /** Find: location prompt, then a map of nearby screening centres with booking cards. */
 export default function Find() {
@@ -70,21 +71,30 @@ function MapScreen({ loc }: { loc: ReturnType<typeof useUserLocation> }) {
   const { width } = useWindowDimensions();
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<string[]>([]);
-  const [selectedId, setSelectedId] = useState(CENTRES[0].id);
+  const [selectedId, setSelectedId] = useState("");
   const listRef = useRef<FlatList>(null);
   const cardW = Math.round(width * 0.78);
   const user = loc.coords;
+  const { centres, loading, error, sample, retry } = useCentres(user);
+
+  // Filter chips come from what the loaded centres actually offer.
+  const chips = useMemo(() => {
+    const counts = new Map<string, number>();
+    centres.forEach((c) => c.services.forEach((s) => counts.set(s, (counts.get(s) ?? 0) + 1)));
+    const top = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([name]) => name);
+    return [...top, OPEN_NOW];
+  }, [centres]);
 
   // Distances follow the person in real time; nearest first once we know where they are.
   const shown: MapCentre[] = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const withKm = CENTRES.map((c) => ({ ...c, km: user ? distanceKm(user, { latitude: c.lat, longitude: c.lng }) : null }));
+    const withKm = centres.map((c) => ({ ...c, km: user ? distanceKm(user, { latitude: c.lat, longitude: c.lng }) : null }));
     const list = withKm.filter((c) => {
-      if (q && !(c.name.toLowerCase().includes(q) || c.services.some((s) => s.toLowerCase().includes(q)))) return false;
-      return filters.every((f) => (f === "NHIS accepted" ? c.nhis : f === "Open now" ? c.open : c.services.includes(f)));
+      if (q && !(c.name.toLowerCase().includes(q) || c.address.toLowerCase().includes(q) || c.services.some((s) => s.toLowerCase().includes(q)))) return false;
+      return filters.every((f) => (f === OPEN_NOW ? c.open === true : c.services.includes(f)));
     });
     return user ? list.sort((a, b) => (a.km ?? 0) - (b.km ?? 0)) : list;
-  }, [query, filters, user]);
+  }, [query, filters, user, centres]);
 
   // Keep the selected card valid when the list changes.
   useEffect(() => {
@@ -113,9 +123,9 @@ function MapScreen({ loc }: { loc: ReturnType<typeof useUserLocation> }) {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
           <View style={[styles.chip, styles.chipArea]}>
             <View style={styles.areaDot} />
-            <Text style={styles.chipAreaText}>{user ? "Near you" : "Abuja"}</Text>
+            <Text style={styles.chipAreaText}>{user ? "Near you" : "Abuja"}{sample ? " · sample" : ""}</Text>
           </View>
-          {CHIPS.map((c) => (
+          {chips.map((c) => (
             <Pressable key={c} accessibilityRole="button" accessibilityState={{ selected: filters.includes(c) }} onPress={() => toggle(c)} style={[styles.chip, filters.includes(c) && styles.chipOn]}>
               <Text style={[styles.chipText, filters.includes(c) && { color: colors.white }]}>{c}</Text>
             </Pressable>
@@ -133,7 +143,22 @@ function MapScreen({ loc }: { loc: ReturnType<typeof useUserLocation> }) {
 
       <View style={[styles.cards, { height: CARDS_HEIGHT }]}>
         {shown.length === 0 ? (
-          <View style={styles.empty}><Text style={styles.emptyText}>No centres match. Try removing a filter.</Text></View>
+          <View style={styles.empty}>
+            {loading ? (
+              <Text style={styles.emptyText}>Finding screening centres…</Text>
+            ) : error ? (
+              <>
+                <Text style={styles.emptyText}>{error}</Text>
+                <Pressable accessibilityRole="button" onPress={retry} style={styles.retry}>
+                  <Text style={styles.retryText}>Try again</Text>
+                </Pressable>
+              </>
+            ) : centres.length === 0 ? (
+              <Text style={styles.emptyText}>No screening centres are listed near here yet.</Text>
+            ) : (
+              <Text style={styles.emptyText}>No centres match. Try removing a filter.</Text>
+            )}
+          </View>
         ) : (
           <FlatList
             ref={listRef}
@@ -189,6 +214,8 @@ const styles = StyleSheet.create({
   cards: { position: "absolute", left: 0, right: 0, bottom: 8 },
   banner: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: colors.white, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10 },
   bannerText: { flex: 1, fontFamily: fonts.medium, fontSize: 13, color: colors.trackInk },
-  empty: { marginHorizontal: 24, padding: 20, borderRadius: 22, backgroundColor: colors.white },
+  empty: { marginHorizontal: 24, padding: 20, borderRadius: 22, backgroundColor: colors.white, gap: 12 },
+  retry: { alignSelf: "center", height: 40, paddingHorizontal: 24, borderRadius: 20, backgroundColor: colors.purple, alignItems: "center", justifyContent: "center" },
+  retryText: { fontFamily: fonts.bold, fontSize: 15, color: colors.white },
   emptyText: { fontFamily: fonts.medium, fontSize: 15, color: colors.trackSoft, textAlign: "center" },
 });

@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "mobile-app",
-    "slug": "mobile-app",
+    "name": "Bloom App",
+    "slug": "bloom-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -42,7 +42,9 @@
         {
           "locationWhenInUsePermission": "Bloom uses your location to show screening centres near you."
         }
-      ]
+      ],
+      "expo-build-properties",
+      ["expo-build-properties", { "android": { "enableMinifyInReleaseBuilds": false, "enableShrinkResourcesInReleaseBuilds": false } }]
     ],
     "experiments": {
       "typedRoutes": true,
