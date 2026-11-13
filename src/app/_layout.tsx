@@ -12,8 +12,12 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 
+import { AppLock } from "../components/AppLock";
+import { AppointmentsProvider } from "../lib/appointments/AppointmentsContext";
 import { AuthProvider } from "../lib/auth/AuthContext";
+import { NotificationsProvider } from "../lib/notifications/NotificationsContext";
 import { ProfileProvider } from "../lib/profile/ProfileContext";
 import { TrackProvider } from "../lib/track/TrackContext";
 
@@ -41,14 +45,22 @@ export default function RootLayout() {
 
   if (!fontsLoaded && !fontError) return null;
 
+  // KeyboardProvider: keeps the field being typed in above the keyboard (Android edge-to-edge included).
   return (
+    <KeyboardProvider>
     <ProfileProvider>
       <AuthProvider>
-        <TrackProvider>
-          <StatusBar style="dark" />
-          <Stack screenOptions={{ headerShown: false }} />
-        </TrackProvider>
+        <NotificationsProvider>
+          <AppointmentsProvider>
+            <TrackProvider>
+              <StatusBar style="dark" />
+              <Stack screenOptions={{ headerShown: false }} />
+              <AppLock />
+            </TrackProvider>
+          </AppointmentsProvider>
+        </NotificationsProvider>
       </AuthProvider>
     </ProfileProvider>
+    </KeyboardProvider>
   );
 }

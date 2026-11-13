@@ -3,6 +3,7 @@ import { useState } from "react";
 
 import { Field, FormError, FormShell } from "../../components/account/AccountForm";
 import { deleteAccount } from "../../lib/api/auth";
+import { disableBiometric } from "../../lib/auth/biometric";
 import { errorMessage } from "../../lib/api/client";
 import { useAuth } from "../../lib/auth/AuthContext";
 
@@ -21,6 +22,7 @@ export default function DeleteAccount() {
     setBusy(true);
     try {
       await deleteAccount(password);
+      await disableBiometric("client");
       await clearSession();
       router.replace("/home" as Href);
     } catch (e) {
@@ -31,6 +33,7 @@ export default function DeleteAccount() {
 
   return (
     <FormShell
+      showLogo={false}
       title="Delete account"
       heading="Delete your account?"
       sub="This removes your Bloom account and your appointment requests from our server. It can't be undone. Your tracker and quiz progress stay on this phone."

@@ -1,11 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Href, useRouter } from "expo-router";
+import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { PillButton } from "../../components/PillButton";
 import { TrackHeader } from "../../components/track/TrackHeader";
 import { colors, fonts } from "../../constants/theme";
+import { useNotifications } from "../../lib/notifications/NotificationsContext";
 import { useTrack } from "../../lib/track/TrackContext";
 
 function formatDate(iso: string): string {
@@ -17,6 +19,27 @@ export default function ScreeningTracker() {
   const router = useRouter();
   const { mammograms, logMammogram, removeMammogram } = useTrack();
   const empty = mammograms.length === 0;
+  const { prefs, setCycle } = useNotifications();
+  const [note, setNote] = useState<string | null>(null);
+
+  // A yearly nudge, counted from the latest mammogram (or from today when none is logged).
+  const lastDate = mammograms.reduce<Date | null>((best, m) => {
+    const d = new Date(m.date);
+    return !best || d > best ? d : best;
+  }, null);
+  const toggleReminder = async () => {
+    if (prefs.mammogram) {
+      await setCycle("mammogram", false);
+      setNote("Yearly reminder turned off.");
+      return;
+    }
+    const how = await setCycle("mammogram", true, lastDate ?? new Date());
+    setNote(how === "phone" ? "We'll remind you when your next mammogram is due." : "Saved in your notifications. Turn on phone notifications in Settings to get a pop-up too.");
+  };
+  const log = () => {
+    logMammogram();
+    if (prefs.mammogram) void setCycle("mammogram", true, new Date());
+  };
 
   return (
     <SafeAreaView style={styles.root} edges={["top", "left", "right"]}>
@@ -58,7 +81,12 @@ export default function ScreeningTracker() {
           <Ionicons name="location-outline" size={20} color={colors.purple} />
           <Text style={styles.bookLinkText}>Book a screening near you</Text>
         </Pressable>
-        <PillButton label="Log a screening" onPress={logMammogram} />
+        <Pressable accessibilityRole="switch" accessibilityState={{ checked: prefs.mammogram }} onPress={() => void toggleReminder()} style={styles.remindRow}>
+          <Ionicons name={prefs.mammogram ? "notifications" : "notifications-outline"} size={20} color={colors.purple} />
+          <Text style={styles.remindText}>{prefs.mammogram ? "Yearly mammogram reminder is on" : "Remind me when my next mammogram is due"}</Text>
+        </Pressable>
+        {note ? <Text style={styles.remindNote}>{note}</Text> : null}
+        <PillButton label="Log a screening" onPress={log} />
       </View>
     </SafeAreaView>
   );
@@ -78,6 +106,9 @@ const styles = StyleSheet.create({
   rowTitle: { fontFamily: fonts.semibold, fontSize: 16, color: colors.trackInk },
   rowDate: { fontFamily: fonts.regular, fontSize: 14, color: "#757575" },
   footer: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8, gap: 10 },
+  remindRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, minHeight: 40 },
+  remindText: { fontFamily: fonts.semibold, fontSize: 15, color: colors.purple },
+  remindNote: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 18, color: "#5F5A7A", textAlign: "center" },
   bookLink: { height: 52, borderRadius: 26, borderWidth: 1.5, borderColor: colors.purple, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
   bookLinkText: { fontFamily: fonts.semibold, fontSize: 16, color: colors.purple },
 });

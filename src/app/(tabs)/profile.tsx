@@ -1,14 +1,17 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Href, useRouter } from "expo-router";
-import { ComponentProps, useState } from "react";
+import { Href, useFocusEffect, useRouter } from "expo-router";
+import { ComponentProps, useCallback, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { PillButton } from "../../components/PillButton";
+import { PushStatusCard } from "../../components/PushStatusCard";
 import { Screen } from "../../components/Screen";
 import { ScreenHeader } from "../../components/ScreenHeader";
 import { colors, fonts } from "../../constants/theme";
 import { useAuth } from "../../lib/auth/AuthContext";
+import { biometricEnabled, biometricLabel, disableBiometric, useBiometricSupported } from "../../lib/auth/biometric";
 import { config } from "../../lib/config";
+import { registerWomanPush } from "../../lib/notifications/push";
 import { useProfile } from "../../lib/profile/ProfileContext";
 
 type IconName = ComponentProps<typeof Ionicons>["name"];
@@ -29,6 +32,23 @@ export default function Profile() {
   const { reset, profile } = useProfile();
   const { account, signedIn, logout } = useAuth();
   const [leaving, setLeaving] = useState(false);
+  const [bioOn, setBioOn] = useState(false);
+  const bioAvailable = useBiometricSupported();
+
+  useFocusEffect(
+    useCallback(() => {
+      void biometricEnabled("client").then(setBioOn);
+    }, []),
+  );
+
+  const toggleBio = async () => {
+    if (bioOn) {
+      await disableBiometric("client");
+      setBioOn(false);
+    } else {
+      router.push({ pathname: "/account/biometric", params: { next: "/profile" } } as unknown as Href);
+    }
+  };
 
   const go = (path: string) => router.push(path as Href);
   const name = account?.name ?? profile.name;
@@ -51,9 +71,14 @@ export default function Profile() {
         {signedIn && account ? <Text style={styles.phone}>{account.phone}</Text> : null}
       </View>
 
+      {config.hasBackend ? <PushStatusCard accent={colors.purple} register={registerWomanPush} /> : null}
+
       {signedIn ? (
         <View style={styles.card}>
           <Row icon="create-outline" label="Edit details" onPress={() => go("/account/edit")} />
+          {bioAvailable ? (
+            <Row icon="finger-print" label={`${biometricLabel()[0].toUpperCase()}${biometricLabel().slice(1)} sign-in: ${bioOn ? "On" : "Off"}`} onPress={() => void toggleBio()} />
+          ) : null}
           <Row icon="log-out-outline" label={leaving ? "Signing out…" : "Sign out"} onPress={() => void signOut()} />
           <Row icon="trash-outline" label="Delete account" danger onPress={() => go("/account/delete")} />
         </View>
@@ -70,6 +95,10 @@ export default function Profile() {
           {!config.hasBackend ? <Text style={styles.warn}>Not connected to the server yet (EXPO_PUBLIC_API_URL is not set).</Text> : null}
         </View>
       )}
+
+      <View style={styles.card}>
+        <Row icon="information-circle-outline" label="About Bloom" onPress={() => go("/about")} />
+      </View>
 
       {/* DEV ONLY: wipes the saved profile and restarts at the splash. Hidden in production builds. */}
       {__DEV__ ? (

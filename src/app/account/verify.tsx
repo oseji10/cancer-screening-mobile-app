@@ -36,7 +36,7 @@ export default function Verify() {
     try {
       const result = await verifyPhone(phone, value);
       await completeSignIn(result);
-      router.replace((next || "/home") as Href);
+      router.replace({ pathname: "/account/welcome", params: { kind: "verified", next: next ?? "" } } as unknown as Href);
     } catch (e) {
       setError(errorMessage(e));
     } finally {

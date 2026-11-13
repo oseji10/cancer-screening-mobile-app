@@ -1,19 +1,32 @@
 {
   "cli": {
-    "version": ">= 27.5.0",
+    "version": ">= 13.0.0",
     "appVersionSource": "remote"
   },
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
-    },
-    "preview": {
       "distribution": "internal",
       "android": { "buildType": "apk" }
     },
+    "development-simulator": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": { "simulator": true }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": { "buildType": "apk" },
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://ncsr-api.nicrat.gov.ng/api"
+      }
+    },
     "production": {
-      // "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://ncsr-api.nicrat.gov.ng/api"
+      }
     }
   },
   "submit": {

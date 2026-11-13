@@ -38,14 +38,15 @@ export const verifyPhone = (phone: string, code: string) =>
 export const resendCode = (phone: string) =>
   apiFetch<CodeSent>(`${base}/auth/resend`, { method: "POST", body: { phone }, auth: false });
 
-export const login = (phone: string, password: string) =>
-  apiFetch<SignedIn>(`${base}/auth/login`, { method: "POST", body: { phone, password }, auth: false });
+/** `login` is the email or the phone number, whichever the person typed. */
+export const login = (login: string, password: string) =>
+  apiFetch<SignedIn>(`${base}/auth/login`, { method: "POST", body: { login, password }, auth: false });
 
-export const forgotPassword = (phone: string) =>
-  apiFetch<CodeSent>(`${base}/auth/forgot`, { method: "POST", body: { phone }, auth: false });
+export const forgotPassword = (login: string) =>
+  apiFetch<CodeSent>(`${base}/auth/forgot`, { method: "POST", body: { login }, auth: false });
 
-export const resetPassword = (phone: string, code: string, password: string) =>
-  apiFetch<SignedIn>(`${base}/auth/reset`, { method: "POST", body: { phone, code, password }, auth: false });
+export const resetPassword = (login: string, code: string, password: string) =>
+  apiFetch<SignedIn>(`${base}/auth/reset`, { method: "POST", body: { login, code, password }, auth: false });
 
 export const fetchMe = () => apiFetch<{ user: Account }>(`${base}/auth/me`);
 

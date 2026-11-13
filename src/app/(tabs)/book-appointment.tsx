@@ -5,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { PillButton } from "../../components/PillButton";
 import { createAppointment } from "../../lib/api/appointments";
+import { useAppointments } from "../../lib/appointments/AppointmentsContext";
 import { errorMessage } from "../../lib/api/client";
 import { useAuth } from "../../lib/auth/AuthContext";
 import { config } from "../../lib/config";
@@ -43,7 +44,9 @@ function Option({ label, selected, onPress }: { label: string; selected: boolean
 /** Book Appointment: pick a day and time, then send the request. */
 export default function BookAppointment() {
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id?: string }>();
+  const { id, reschedule } = useLocalSearchParams<{ id?: string; reschedule?: string }>();
+  const rescheduleId = reschedule ? Number(reschedule) : null;
+  const appts = useAppointments();
   const centre = findCentre(id);
   const { requestAppointment } = useTrack();
   const { signedIn } = useAuth();
@@ -57,6 +60,22 @@ export default function BookAppointment() {
 
   const send = async () => {
     if (!centre || day === null || !time) return;
+
+    // Changing the day or time of a booking made earlier.
+    if (rescheduleId) {
+      setError(null);
+      setSending(true);
+      try {
+        await appts.reschedule(rescheduleId, isoDay(day), TIME_24[time] ?? "19:00");
+      } catch (e) {
+        setError(errorMessage(e));
+        setSending(false);
+        return;
+      }
+      setSending(false);
+      router.replace("/find" as Href);
+      return;
+    }
 
     if (needsAccount) {
       router.push({ pathname: "/account/sign-in", params: { next: `/book-appointment?id=${centre.id}` } } as unknown as Href);
@@ -76,6 +95,7 @@ export default function BookAppointment() {
           type: "general",
         });
         serverId = created.id;
+        void appts.refresh();
       } catch (e) {
         setError(errorMessage(e));
         setSending(false);
@@ -84,14 +104,15 @@ export default function BookAppointment() {
       setSending(false);
     }
 
-    requestAppointment({ centreId: centre.id, centreName: centre.name, slot: `${DAY_NAMES[day]}, ${time}`, serverId });
+    const whenISO = new Date(`${isoDay(day)}T${TIME_24[time] ?? "19:00"}:00`).toISOString();
+    requestAppointment({ centreId: centre.id, centreName: centre.name, slot: `${DAY_NAMES[day]}, ${time}`, serverId, whenISO });
     router.replace("/request-sent" as Href);
   };
 
   return (
     <SafeAreaView style={styles.root} edges={["top", "left", "right"]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <TrackHeader title="Book Appointment" onBack={() => router.replace("/find" as Href)} info="Pick a day and time. The centre confirms your slot and a navigator will contact you." />
+        <TrackHeader title={rescheduleId ? "Change Appointment" : "Book Appointment"} onBack={() => router.replace("/find" as Href)} info="Pick a day and time. The centre confirms your slot and a navigator will contact you." />
 
         <View style={styles.facility}>
           {/* PLACEHOLDER: centre logo. */}
@@ -140,7 +161,7 @@ export default function BookAppointment() {
         ) : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <PillButton
-          label={sending ? "Sending…" : needsAccount ? "Sign in to book" : "Book Appointment"}
+          label={sending ? "Sending…" : needsAccount ? "Sign in to book" : rescheduleId ? "Save new time" : "Book Appointment"}
           disabled={!ready || sending}
           onPress={() => void send()}
         />

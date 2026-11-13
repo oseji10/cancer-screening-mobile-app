@@ -22,7 +22,13 @@ export type ApiCentre = {
 
 export type CentresQuery = { lat?: number; lng?: number; radiusKm?: number; limit?: number; openNow?: boolean };
 
-export async function fetchCentres(query: CentresQuery, signal?: AbortSignal): Promise<ApiCentre[]> {
+export type CentresResult = {
+  data: ApiCentre[];
+  /** True when nothing was listed within the radius, so these are the nearest centres anywhere. */
+  expanded: boolean;
+};
+
+export async function fetchCentres(query: CentresQuery, signal?: AbortSignal): Promise<CentresResult> {
   const params: string[] = [];
   if (query.lat !== undefined && query.lng !== undefined) {
     params.push(`lat=${query.lat.toFixed(5)}`, `lng=${query.lng.toFixed(5)}`);
@@ -32,6 +38,6 @@ export async function fetchCentres(query: CentresQuery, signal?: AbortSignal): P
   if (query.openNow) params.push("open_now=1");
 
   const qs = params.length ? `?${params.join("&")}` : "";
-  const res = await apiFetch<{ data: ApiCentre[] }>(`${config.bloomPath}/centres${qs}`, { auth: false, signal });
-  return res.data;
+  const res = await apiFetch<{ data: ApiCentre[]; meta?: { expanded?: boolean } }>(`${config.bloomPath}/centres${qs}`, { auth: false, signal });
+  return { data: res.data, expanded: res.meta?.expanded === true };
 }

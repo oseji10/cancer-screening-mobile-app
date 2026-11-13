@@ -1,10 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Href, useRouter } from "expo-router";
+import { useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { PillButton } from "../../components/PillButton";
 import { colors, fonts } from "../../constants/theme";
+import { scheduleBookingReminders } from "../../lib/appointments/AppointmentsContext";
+import { useNotifications } from "../../lib/notifications/NotificationsContext";
 import { useTrack } from "../../lib/track/TrackContext";
 
 function sentLabel(iso?: string): string {
@@ -17,6 +20,25 @@ export default function RequestSent() {
   const router = useRouter();
   const { appointments } = useTrack();
   const latest = appointments[0];
+  const notifs = useNotifications();
+  const [reminder, setReminder] = useState<"idle" | "phone" | "inbox" | "past">("idle");
+
+  const remind = async () => {
+    if (reminder !== "idle") {
+      router.replace("/home" as Href);
+      return;
+    }
+    const when = latest?.whenISO ? new Date(latest.whenISO) : null;
+    if (!latest || !when || when.getTime() <= Date.now() + 5 * 60 * 1000) {
+      setReminder("past");
+      return;
+    }
+    const how = await scheduleBookingReminders(
+      { id: latest.serverId ?? latest.id, when, where: latest.centreName, label: latest.slot },
+      notifs,
+    );
+    setReminder(how);
+  };
 
   const steps = [
     { title: "Request sent", sub: sentLabel(latest?.requestedAt), done: true },
@@ -51,7 +73,12 @@ export default function RequestSent() {
         </View>
       </ScrollView>
       <View style={styles.footer}>
-        <PillButton label="Remind me" onPress={() => router.replace("/home" as Href)} />
+        {reminder === "phone" ? <Text style={styles.reminded}>We'll remind you the evening before and 2 hours before.</Text> : null}
+        {reminder === "inbox" ? (
+          <Text style={styles.reminded}>Reminder saved in your notifications (tap the bell). Turn on phone notifications in Settings to get pop-ups too.</Text>
+        ) : null}
+        {reminder === "past" ? <Text style={styles.reminded}>This slot is too soon for a reminder. We'll notify you when the centre confirms.</Text> : null}
+        <PillButton label={reminder === "idle" ? "Remind me" : "Done"} onPress={() => void remind()} />
       </View>
     </SafeAreaView>
   );
@@ -74,5 +101,6 @@ const styles = StyleSheet.create({
   stepTitle: { fontFamily: fonts.bold, fontSize: 17, color: colors.trackInk },
   dim: { color: "#8B87A8" },
   stepSub: { fontFamily: fonts.regular, fontSize: 15, color: "#8B87A8", marginTop: 2 },
+  reminded: { fontFamily: fonts.medium, fontSize: 14, lineHeight: 20, color: "#5F5A7A", textAlign: "center", marginBottom: 10 },
   footer: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 },
 });

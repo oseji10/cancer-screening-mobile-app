@@ -9,7 +9,7 @@ import { useAuth } from "../../lib/auth/AuthContext";
 import { config } from "../../lib/config";
 import { colors, fonts } from "../../constants/theme";
 
-/** Reset a forgotten password: phone number, then SMS code plus a new password. */
+/** Reset a forgotten password: email or phone number, then the emailed code plus a new password. */
 export default function Forgot() {
   const router = useRouter();
   const { next } = useLocalSearchParams<{ next?: string }>();
@@ -49,7 +49,7 @@ export default function Forgot() {
     try {
       const result = await resetPassword(phone.trim(), code, password);
       await completeSignIn(result);
-      router.replace((next || "/home") as Href);
+      router.replace({ pathname: "/account/welcome", params: { kind: "reset", next: next ?? "" } } as unknown as Href);
     } catch (e) {
       setError(errorMessage(e));
     } finally {
@@ -61,11 +61,11 @@ export default function Forgot() {
     <FormShell
       title="Forgot password"
       heading="Reset your password"
-      sub="Enter your phone number and we'll email a code to the address on your account."
+      sub="Enter your email or phone number and we'll email a code to the address on your account."
       onBack={back}
-      action={{ label: busy ? "Sending…" : "Send code", onPress: () => void sendCode(), disabled: busy || phone.trim().length < 10 }}
+      action={{ label: busy ? "Sending…" : "Send code", onPress: () => void sendCode(), disabled: busy || phone.trim().length < 5 }}
     >
-      <Field label="Phone number" value={phone} onChangeText={setPhone} placeholder="0803 123 4567" keyboardType="phone-pad" autoComplete="tel" maxLength={20} />
+      <Field label="Email or phone number" value={phone} onChangeText={setPhone} placeholder="you@example.com or 0803 123 4567" keyboardType="email-address" autoCapitalize="none" autoCorrect={false} autoComplete="username" maxLength={150} />
       <FormError message={error} />
     </FormShell>
   ) : (

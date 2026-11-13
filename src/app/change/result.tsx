@@ -1,4 +1,5 @@
 import { Href, useRouter } from "expo-router";
+import { useState } from "react";
 import { Image, Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -6,12 +7,29 @@ import { PillButton } from "../../components/PillButton";
 import { TrackHeader } from "../../components/track/TrackHeader";
 import { colors, fonts } from "../../constants/theme";
 import { CHANGE_IMAGES } from "../../lib/change/images";
+import { atNine, useNotifications } from "../../lib/notifications/NotificationsContext";
 
 /** After the questionnaire: encourage the person and offer next steps. */
 export default function ChangeResult() {
   const router = useRouter();
+  const { setReminder } = useNotifications();
+  const [note, setNote] = useState<string | null>(null);
 
-  const keepWatching = () => router.replace("/home" as Href); // No reminder is scheduled yet.
+  // "Keep an eye on it": remind them in three days to check the change again.
+  const keepWatching = async () => {
+    const at = new Date();
+    at.setDate(at.getDate() + 3);
+    const how = await setReminder({
+      key: "change-recheck",
+      kind: "change",
+      at: atNine(at),
+      title: "Check your breast change again",
+      body: "Has it grown, changed shape or become painful? If so, book a check-up. Tap to log how it looks now.",
+      href: "/change/intro",
+    });
+    setNote(how === "phone" ? "We'll remind you in 3 days." : "Reminder saved in your notifications for 3 days from now.");
+    setTimeout(() => router.replace("/home" as Href), 2000);
+  };
   const contactFriend = () => {
     void Share.share({ message: "I noticed a change in my breast and I'd like to talk. Can you call me when you're free?" }).catch(() => undefined);
   };
@@ -30,8 +48,8 @@ export default function ChangeResult() {
         <Text style={styles.ask}>What do you want to do next?</Text>
 
         <View style={styles.options}>
-          <Pressable accessibilityRole="button" onPress={keepWatching} style={styles.soft}>
-            <Text style={styles.softText}>Keep an eye on it. Remind me to check again in a few days</Text>
+          <Pressable accessibilityRole="button" onPress={() => void keepWatching()} disabled={note !== null} style={styles.soft}>
+            <Text style={styles.softText}>{note ?? "Keep an eye on it. Remind me to check again in a few days"}</Text>
           </Pressable>
           <Pressable accessibilityRole="button" onPress={contactFriend} style={styles.soft}>
             <Text style={styles.softText}>Contact a friend</Text>

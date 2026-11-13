@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { ReactNode, useState } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, TextInputProps, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, TextInput, TextInputProps, View } from "react-native";
 
 import { colors, fonts } from "../../constants/theme";
 import { PillButton } from "../PillButton";
@@ -17,12 +17,14 @@ type ShellProps = {
   action: { label: string; onPress: () => void; disabled?: boolean };
   /** Small text links under the button. */
   links?: ReactNode;
+  /** Show the Bloom logo above the heading (default true). */
+  showLogo?: boolean;
 };
 
 /** Shared layout for the account screens: header, heading, fields, pinned button. */
-export function FormShell({ title, heading, sub, onBack, children, action, links }: ShellProps) {
+export function FormShell({ title, heading, sub, onBack, children, action, links, showLogo = true }: ShellProps) {
   return (
-    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+    <>
       <Screen
         contentStyle={styles.content}
         footer={
@@ -33,13 +35,14 @@ export function FormShell({ title, heading, sub, onBack, children, action, links
         }
       >
         <ScreenHeader title={title} onBack={onBack} />
+        {showLogo ? <Image accessibilityLabel="Bloom" source={require("../../../assets/brand/logo.png")} style={styles.logo} resizeMode="contain" /> : null}
         <View style={styles.head}>
           <Text style={styles.heading}>{heading}</Text>
           {sub ? <Text style={styles.sub}>{sub}</Text> : null}
         </View>
         <View style={styles.fields}>{children}</View>
       </Screen>
-    </KeyboardAvoidingView>
+    </>
   );
 }
 
@@ -89,6 +92,28 @@ export function FormError({ message }: { message: string | null }) {
   ) : null;
 }
 
+/**
+ * For a health worker who opened the women's sign-in or sign-up by mistake: takes her to the
+ * health worker sign-in and remembers that choice for the next time the app opens.
+ */
+export function HealthWorkerSwitch({ onPress }: { onPress: () => void }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Are you a community health worker? Go to the health worker sign-in"
+      onPress={onPress}
+      style={({ pressed }) => [styles.switchCard, pressed && { opacity: 0.8 }]}
+    >
+      <Ionicons name="people-outline" size={20} color={SWITCH_TEAL} />
+      <View style={{ flex: 1 }}>
+        <Text style={styles.switchTitle}>Are you a community health worker?</Text>
+        <Text style={styles.switchSub}>Go to the health worker sign-in</Text>
+      </View>
+      <Ionicons name="chevron-forward" size={18} color={SWITCH_TEAL} />
+    </Pressable>
+  );
+}
+
 export function TextLink({ label, onPress, disabled }: { label: string; onPress: () => void; disabled?: boolean }) {
   return (
     <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress} hitSlop={10}>
@@ -97,7 +122,13 @@ export function TextLink({ label, onPress, disabled }: { label: string; onPress:
   );
 }
 
+const SWITCH_TEAL = "#159E96";
+
 const styles = StyleSheet.create({
+  switchCard: { flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 16, borderWidth: 1, borderColor: "#CDEBE8", backgroundColor: "#F3FBFA", paddingHorizontal: 16, paddingVertical: 14, marginTop: 4 },
+  switchTitle: { fontFamily: fonts.semibold, fontSize: 15, color: colors.black },
+  switchSub: { fontFamily: fonts.regular, fontSize: 14, color: SWITCH_TEAL, marginTop: 2 },
+  logo: { alignSelf: "center", width: 160, height: 86, marginTop: 4 },
   flex: { flex: 1, backgroundColor: colors.white },
   content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 24, gap: 24 },
   head: { gap: 8, paddingHorizontal: 4 },

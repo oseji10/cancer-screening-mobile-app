@@ -1,6 +1,6 @@
 import { Href, useRouter } from "expo-router";
 import { useState } from "react";
-import { Image, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from "react-native";
+import { Image, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { PillButton } from "../../components/PillButton";
 import { Screen } from "../../components/Screen";
@@ -21,7 +21,7 @@ export default function SetupName() {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+    <>
       <Screen
         contentStyle={styles.content}
         footer={
@@ -48,7 +48,7 @@ export default function SetupName() {
           />
         </View>
       </Screen>
-    </KeyboardAvoidingView>
+    </>
   );
 }
 

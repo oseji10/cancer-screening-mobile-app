@@ -9,6 +9,9 @@ dist/
 web-build/
 expo-env.d.ts
 
+*firebase-adminsdk*.json
+bloom-22f9f-firebase-adminsdk-fbsvc-2b10e01452.json
+
 # Native
 .kotlin/
 *.orig.*

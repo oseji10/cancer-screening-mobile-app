@@ -26,6 +26,8 @@ export type AppointmentRequest = {
   slot: string;
   /** Id of the request on the NCSR server, when it was sent while signed in. */
   serverId?: number;
+  /** The day and time asked for, as an ISO moment (used for reminders). */
+  whenISO?: string;
   requestedAt: string; // ISO
 };
 
@@ -44,8 +46,6 @@ type TrackContextValue = {
   logSbe: () => void;
   logMammogram: () => void;
   removeMammogram: (id: string) => void;
-  /** Remembers that the user asked to be reminded next month (no notifications yet). */
-  remindNextMonth: () => void;
   /** Breast changes the user has reported through "I noticed a change". Stored on this device only. */
   changes: ChangeReport[];
   logChange: (report: Omit<ChangeReport, "id" | "date">) => void;
@@ -102,7 +102,6 @@ export function TrackProvider({ children }: { children: ReactNode }) {
       logMammogram: () =>
         save({ ...state, mammograms: [{ id: String(Date.now()), date: new Date().toISOString() }, ...state.mammograms] }),
       removeMammogram: (id) => save({ ...state, mammograms: state.mammograms.filter((m) => m.id !== id) }),
-      remindNextMonth: () => undefined,
       appointments: state.appointments,
       requestAppointment: (req) =>
         save({ ...state, appointments: [{ ...req, id: String(Date.now()), requestedAt: new Date().toISOString() }, ...state.appointments] }),

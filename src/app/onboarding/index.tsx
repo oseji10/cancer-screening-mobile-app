@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { PillButton } from "../../components/PillButton";
 import { colors, fonts, slideTints } from "../../constants/theme";
+import { setRole } from "../../lib/role";
 
 type Slide = {
   title: string;
@@ -98,6 +99,16 @@ export default function OnboardingSlides() {
           <Pressable accessibilityRole="button" onPress={() => router.push("/account/sign-in" as Href)} hitSlop={12}>
             <Text style={styles.signIn}>I already have an account</Text>
           </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => {
+              void setRole("chw");
+              router.replace("/chw/login" as Href);
+            }}
+            hitSlop={12}
+          >
+            <Text style={styles.chwLink}>I'm a community health worker</Text>
+          </Pressable>
         </View>
       </View>
     </View>
@@ -105,6 +116,7 @@ export default function OnboardingSlides() {
 }
 
 const styles = StyleSheet.create({
+  chwLink: { fontFamily: fonts.semibold, fontSize: 14, color: "#159E96", textAlign: "center" },
   card: {
     position: "absolute",
     left: 0,

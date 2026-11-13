@@ -8,23 +8,33 @@ import { VideoModal } from "../../components/VideoModal";
 import { PillButton } from "../../components/PillButton";
 import { TrackHeader } from "../../components/track/TrackHeader";
 import { colors, fonts } from "../../constants/theme";
+import { useNotifications } from "../../lib/notifications/NotificationsContext";
 import { useTrack } from "../../lib/track/TrackContext";
 
 /** Change Tracker: the monthly self-breast-exam guide, with a way to log it. */
 export default function ChangeTracker() {
   const router = useRouter();
-  const { logSbe, remindNextMonth, doneSbeThisMonth } = useTrack();
+  const { logSbe, doneSbeThisMonth } = useTrack();
+  const { setCycle, prefs } = useNotifications();
+  const [reminderNote, setReminderNote] = useState<string | null>(null);
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace("/home" as Href));
 
   const done = () => {
     if (!doneSbeThisMonth) logSbe();
+    // Keep the monthly reminders going from today, if they are on.
+    if (prefs.sbe) void setCycle("sbe", true);
     router.replace("/track" as Href);
   };
 
-  const later = () => {
-    remindNextMonth();
-    router.replace("/home" as Href);
+  const later = async () => {
+    const how = await setCycle("sbe", true);
+    setReminderNote(
+      how === "phone"
+        ? "Done. We'll remind you every month."
+        : "Reminders are saved in your notifications. Turn on phone notifications in Settings to get pop-ups too.",
+    );
+    setTimeout(() => router.replace("/home" as Href), 2200);
   };
 
   const [videoOpen, setVideoOpen] = useState(false);
@@ -77,9 +87,13 @@ export default function ChangeTracker() {
 
         <View style={styles.actions}>
           <PillButton label={doneSbeThisMonth ? "Logged this month. See my tracker" : "I have done my SBE this month"} onPress={done} />
-          <Pressable accessibilityRole="button" onPress={later} hitSlop={10}>
-            <Text style={styles.later}>Remind me next month</Text>
-          </Pressable>
+          {reminderNote ? (
+            <Text style={styles.reminderNote}>{reminderNote}</Text>
+          ) : (
+            <Pressable accessibilityRole="button" onPress={() => void later()} hitSlop={10}>
+              <Text style={styles.later}>{prefs.sbe ? "Monthly reminder is on" : "Remind me next month"}</Text>
+            </Pressable>
+          )}
         </View>
       </ScrollView>
       <VideoModal visible={videoOpen} source={require("../../../assets/videos/sbe-whats-normal.mp4")} onClose={() => setVideoOpen(false)} />
@@ -107,5 +121,6 @@ const styles = StyleSheet.create({
   speed: { borderRadius: 18, backgroundColor: "#F3EFFF", paddingHorizontal: 14, paddingVertical: 8 },
   speedText: { fontFamily: fonts.bold, fontSize: 14, color: colors.purple },
   actions: { gap: 20, alignItems: "center", paddingTop: 4 },
+  reminderNote: { fontFamily: fonts.medium, fontSize: 15, lineHeight: 21, color: colors.trackSoft, textAlign: "center", paddingHorizontal: 12 },
   later: { fontFamily: fonts.semibold, fontSize: 17, color: colors.trackSoft },
 });

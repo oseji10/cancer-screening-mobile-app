@@ -38,6 +38,7 @@ export default function EditDetails() {
 
   return (
     <FormShell
+      showLogo={false}
       title="Edit details"
       heading="Your details"
       onBack={back}

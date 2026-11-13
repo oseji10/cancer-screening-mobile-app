@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Href, useRouter } from "expo-router";
 import { useState } from "react";
-import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { PillButton } from "../../components/PillButton";
@@ -24,129 +25,39 @@ const WHEN = ["Last few days", "Last few weeks", "1–3 months", "3–6 months",
 const TREND = ["Getting better", "Staying the same", "Getting worse", "Comes and goes", "Not sure"];
 const OTHER = ["Headaches", "Body aches", "Mood swings", "Cramps", "Skin redness", "Diarrhea"];
 
-// function Chip({ label, tone, selected, onPress }: { label: string; tone: Tone; selected: boolean; onPress: () => void }) {
-//   return (
-//     <Pressable
-//       accessibilityRole="button"
-//       accessibilityState={{ selected }}
-//       onPress={onPress}
-//       style={[styles.chip, { backgroundColor: selected ? tone.on : tone.bg }, selected && styles.chipOn]}
-//     >
-//       {/* Icon: assets/change/chip-<label>.png (see src/lib/change/images.ts). */}
-//       <View style={[styles.chipIcon, { backgroundColor: tone.dot }]}>
-//         <Image source={CHANGE_IMAGES.chip[slug(label)]} style={styles.chipImg} resizeMode="contain" />
-//         {selected ? <View style={styles.tick}><Ionicons name="checkmark" size={11} color={colors.white} /></View> : null}
-//       </View>
-//       <Text style={styles.chipText}>{label}</Text>
-//     </Pressable>
-//   );
-// }
-
-function Chip({
-  label,
-  tone,
-  selected,
-  onPress,
-  imageKey,
-}: {
-  label: string;
-  tone: Tone;
-  selected: boolean;
-  onPress: () => void;
-  imageKey?: string;
-}) {
+function Chip({ label, tone, selected, onPress }: { label: string; tone: Tone; selected: boolean; onPress: () => void }) {
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ selected }}
       onPress={onPress}
-      style={[
-        styles.chip,
-        { backgroundColor: selected ? tone.on : tone.bg },
-        selected && styles.chipOn,
-      ]}
+      style={[styles.chip, { backgroundColor: selected ? tone.on : tone.bg }, selected && styles.chipOn]}
     >
+      {/* Icon: assets/change/chip-<label>.png (see src/lib/change/images.ts). */}
       <View style={[styles.chipIcon, { backgroundColor: tone.dot }]}>
-        <Image
-          source={CHANGE_IMAGES.chip[imageKey ?? slug(label)]}
-          style={styles.chipImg}
-          resizeMode="contain"
-        />
-        {selected ? (
-          <View style={styles.tick}>
-            <Ionicons name="checkmark" size={11} color={colors.white} />
-          </View>
-        ) : null}
+        <Image source={CHANGE_IMAGES.chip[slug(label)]} style={styles.chipImg} resizeMode="contain" />
+        {selected ? <View style={styles.tick}><Ionicons name="checkmark" size={11} color={colors.white} /></View> : null}
       </View>
       <Text style={styles.chipText}>{label}</Text>
     </Pressable>
   );
 }
 
-// function Group({ title, options, tone, value, multi, onChange, query }: {
-//   title: string; options: string[]; tone: Tone; value: string[]; multi: boolean; onChange: (v: string[]) => void; query: string;
-// }) {
-//   const shown = options.filter((o) => o.toLowerCase().includes(query.trim().toLowerCase()));
-//   if (shown.length === 0) return null;
-//   const toggle = (o: string) => {
-//     if (multi) onChange(value.includes(o) ? value.filter((x) => x !== o) : [...value, o]);
-//     else onChange(value.includes(o) ? [] : [o]);
-//   };
-//   return (
-//     <View style={styles.card}>
-//       <Text style={styles.q}>{title}</Text>
-//       <View style={styles.chips}>
-//         {shown.map((o) => (
-//           <Chip key={o} label={o} tone={tone} selected={value.includes(o)} onPress={() => toggle(o)} />
-//         ))}
-//       </View>
-//     </View>
-//   );
-// }
-
-function Group({
-  title,
-  options,
-  tone,
-  value,
-  multi,
-  onChange,
-  query,
-  imageKeys = {},
-}: {
-  title: string;
-  options: string[];
-  tone: Tone;
-  value: string[];
-  multi: boolean;
-  onChange: (v: string[]) => void;
-  query: string;
-  imageKeys?: Record<string, string>;
+function Group({ title, options, tone, value, multi, onChange, query }: {
+  title: string; options: string[]; tone: Tone; value: string[]; multi: boolean; onChange: (v: string[]) => void; query: string;
 }) {
-  const shown = options.filter((o) =>
-    o.toLowerCase().includes(query.trim().toLowerCase())
-  );
-
+  const shown = options.filter((o) => o.toLowerCase().includes(query.trim().toLowerCase()));
   if (shown.length === 0) return null;
-
   const toggle = (o: string) => {
     if (multi) onChange(value.includes(o) ? value.filter((x) => x !== o) : [...value, o]);
     else onChange(value.includes(o) ? [] : [o]);
   };
-
   return (
     <View style={styles.card}>
       <Text style={styles.q}>{title}</Text>
       <View style={styles.chips}>
         {shown.map((o) => (
-          <Chip
-            key={o}
-            label={o}
-            tone={tone}
-            selected={value.includes(o)}
-            onPress={() => toggle(o)}
-            imageKey={imageKeys[o]}
-          />
+          <Chip key={o} label={o} tone={tone} selected={value.includes(o)} onPress={() => toggle(o)} />
         ))}
       </View>
     </View>
@@ -173,8 +84,7 @@ export default function ChangeForm() {
 
   return (
     <SafeAreaView style={styles.root} edges={["top", "left", "right"]}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+      <KeyboardAwareScrollView bottomOffset={24} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <TrackHeader title="Change Tracker" onBack={() => router.back()} info="Answer what you can. Everything here stays on your phone, and you can skip any question." />
 
           <View style={styles.search}>
@@ -201,19 +111,7 @@ export default function ChangeForm() {
           <Group title="How would you describe the change?" options={DESCRIBE} tone={PINK} value={described} multi onChange={setDescribed} query={query} />
           <Group title="Where is the change located?" options={WHERE} tone={GREEN} value={where} multi onChange={setWhere} query={query} />
           <Group title="When did you first notice the change?" options={WHEN} tone={YELLOW} value={when} multi={false} onChange={setWhen} query={query} />
-          {/* <Group title="Is the change..." options={TREND} tone={LILAC} value={trend} multi={false} onChange={setTrend} query={query} /> */}
-          <Group
-  title="Is the change..."
-  options={TREND}
-  tone={LILAC}
-  value={trend}
-  multi={false}
-  onChange={setTrend}
-  query={query}
-  imageKeys={{
-    "Not sure": "not-sure2",
-  }}
-/>
+          <Group title="Is the change..." options={TREND} tone={LILAC} value={trend} multi={false} onChange={setTrend} query={query} />
           <Group title="Do you have any other symptoms?" options={OTHER} tone={PINK} value={other} multi onChange={setOther} query={query} />
 
           <View style={styles.card}>
@@ -229,8 +127,7 @@ export default function ChangeForm() {
           </View>
 
           <PillButton label="Continue" onPress={next} />
-        </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 }

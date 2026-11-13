@@ -8,7 +8,11 @@ import { DateStrip } from "../../components/home/DateStrip";
 import { RiskResultCard } from "../../components/home/RiskResultCard";
 import { SbeReminderCard } from "../../components/home/SbeReminderCard";
 import { TopicCards, TopicId } from "../../components/home/TopicCards";
+import { PostStrip } from "../../components/posts/PostStrip";
 import { colors, fonts } from "../../constants/theme";
+import { BiometricNudge } from "../../components/auth/BiometricNudge";
+import { useAuth } from "../../lib/auth/AuthContext";
+import { useNotifications } from "../../lib/notifications/NotificationsContext";
 import { useProfile } from "../../lib/profile/ProfileContext";
 import { assessRisk, RiskLevel } from "../../lib/risk/scoring";
 import { loadAssessment } from "../../lib/risk/storage";
@@ -47,6 +51,8 @@ const FEATURED: Record<string, TopicId | undefined> = {
 
 export default function Home() {
   const router = useRouter();
+  const { unread } = useNotifications();
+  const { signedIn } = useAuth();
   const { profile, reset } = useProfile();
   const [riskLevel, setRiskLevel] = useState<RiskLevel | null>(null);
   useFocusEffect(
@@ -72,18 +78,26 @@ export default function Home() {
             </Pressable>
             <Text style={styles.welcome}>Welcome back to Bloom</Text>
           </View>
-          <View style={styles.bell} accessibilityLabel="Notifications" accessibilityRole="button">
+          <Pressable
+            style={styles.bell}
+            accessibilityLabel={unread > 0 ? `Notifications, ${unread} new` : "Notifications"}
+            accessibilityRole="button"
+            onPress={() => router.push("/notifications" as Href)}
+          >
             <Ionicons name="notifications-outline" size={22} color={colors.black} />
-            <View style={styles.badge} />
-          </View>
+            {unread > 0 ? <View style={styles.badge} /> : null}
+          </Pressable>
         </View>
 
         <DateStrip />
+        <BiometricNudge scope="client" accent={colors.purple} visible={signedIn} onEnable={() => router.push({ pathname: "/account/biometric", params: { next: "/home" } } as unknown as Href)} />
         <SbeReminderCard onStart={() => router.push("/change-tracker" as Href)} />
         {riskLevel ? <RiskResultCard title={RESULT_TITLE[riskLevel]} onPress={() => router.push("/risk-assessment/done" as Href)} /> : null}
 
         <Text style={styles.quickFind}>What do you want help with today?</Text>
         <TopicCards featured={profile.need ? FEATURED[profile.need] : undefined} onSelect={(id) => router.push(ROUTES[id] as Href)} />
+
+        <PostStrip side="women" accent={colors.purple} inset={16} onOpen={(id) => router.push(`/posts/${id}` as Href)} onViewAll={() => router.push("/posts" as Href)} />
       </ScrollView>
     </SafeAreaView>
   );

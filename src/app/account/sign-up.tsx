@@ -1,11 +1,13 @@
 import { Href, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 
-import { Field, FormError, FormShell, TextLink } from "../../components/account/AccountForm";
+import { Field, FormError, FormShell, HealthWorkerSwitch, TextLink } from "../../components/account/AccountForm";
+import { setRole } from "../../lib/role";
 import { register } from "../../lib/api/auth";
 import { errorMessage } from "../../lib/api/client";
 import { config } from "../../lib/config";
 import { useProfile } from "../../lib/profile/ProfileContext";
+import { setPendingLogin } from "../../lib/auth/biometric";
 
 /** Create a Bloom account. Age and "what brought you here" come from onboarding. */
 export default function SignUp() {
@@ -19,6 +21,12 @@ export default function SignUp() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  /** Opened the women's side by mistake: go to the health worker sign-in (and open there next time). */
+  const toHealthWorker = () => {
+    void setRole("chw");
+    router.replace("/chw/login" as Href);
+  };
+
   const back = () => (router.canGoBack() ? router.back() : router.replace("/profile" as Href));
   const strong = password.length >= 8 && /[A-Za-z]/.test(password) && /\d/.test(password);
 
@@ -31,6 +39,8 @@ export default function SignUp() {
     setBusy(true);
     try {
       const sent = await register({ name: name.trim(), phone: phone.trim(), email: email.trim(), password, age: profile.age, need: profile.need });
+      // Kept in memory so we can offer fingerprint sign-in once the code is confirmed.
+      setPendingLogin("client", { login: phone.trim(), password });
       router.push({
         pathname: "/account/verify",
         params: { phone: sent.phone ?? phone.trim(), email: sent.email ?? email.trim(), dc: sent.debug_code ?? "", next: next ?? "" },
@@ -56,6 +66,7 @@ export default function SignUp() {
       <Field label="Email" value={email} onChangeText={setEmail} placeholder="you@example.com" keyboardType="email-address" autoCapitalize="none" autoCorrect={false} autoComplete="email" textContentType="emailAddress" maxLength={150} hint="We send your confirmation code here." />
       <Field label="Password" secure value={password} onChangeText={setPassword} placeholder="At least 8 characters" hint="Use 8 or more characters with a letter and a number." autoComplete="new-password" textContentType="newPassword" />
       <FormError message={error} />
+      <HealthWorkerSwitch onPress={toHealthWorker} />
     </FormShell>
   );
 }
