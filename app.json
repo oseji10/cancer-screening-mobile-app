@@ -9,12 +9,15 @@
     "scheme": "mobileapp",
     "userInterfaceStyle": "automatic",
     "ios": {
-  "icon": "./assets/expo.icon",
-  "bundleIdentifier": "ng.resilience.bloom"
-},
+      "icon": "./assets/images/icon.png",
+      "bundleIdentifier": "ng.resilience.bloom",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
+    },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -29,7 +32,6 @@
         "android.permission.USE_FINGERPRINT"
       ]
     },
-    
     "web": {
       "output": "server",
       "favicon": "./assets/images/favicon.png"
@@ -70,6 +72,7 @@
       [
         "expo-notifications",
         {
+          "icon": "./assets/images/notification-icon.png",
           "color": "#7C5CE0"
         }
       ],
@@ -84,7 +87,6 @@
       "typedRoutes": true,
       "reactCompiler": true
     },
-    "package": "ng.resilience.bloom",
     "extra": {
       "router": {
         "asyncRoutes": {

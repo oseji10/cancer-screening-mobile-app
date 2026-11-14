@@ -1,0 +1,49 @@
+{
+  "id": "5042d7e2-a8d4-49e4-854f-8628eef9926a",
+  "status": "ERRORED",
+  "platform": "ANDROID",
+  "error": {
+    "errorCode": "EAS_BUILD_UNKNOWN_GRADLE_ERROR",
+    "message": "Gradle build failed with unknown error. See logs for the \"Run gradlew\" phase for more information."
+  },
+  "artifacts": {},
+  "fingerprint": {
+    "id": "01a1d726-db78-7cb3-86f5-822d94cb4e39",
+    "hash": "d2e151370987a79c936b7db99f61cf3a8d48b003"
+  },
+  "initiatingActor": {
+    "id": "25f7edce-a41e-4261-b167-cd064f74c519",
+    "displayName": "oseji11"
+  },
+  "logFiles": [
+    "https://storage.googleapis.com/eas-workflows-production/logs/6c87c1ea-e37d-47b2-8180-57edaefc66cd/5042d7e2-a8d4-49e4-854f-8628eef9926a/2026-11-13T23%3A03%3A35Z-1b0ab19e-4f80-40ec-baf6-caf9ab5bcad1.txt?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=www-production%40exponentjs.iam.gserviceaccount.com%2F20261113%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20261113T232208Z&X-Goog-Expires=900&X-Goog-SignedHeaders=host&X-Goog-Signature=4db67606616caadb8c9145e8f9887324f580dea6f766759d4372a85ebed32124a05a0e3ad3aefb8a93eb8fa0de274a55c2aad6b708fd279e1028ed7a6d92817180f5a42165d25c3dcda62a87a5aca46f4aa3cba763e97d81c56d532ddd911bfc73ab6e8bd73568868ed366f52b53b0c449f5ddd677b46ae67724964aaaab83ea60c404b11e327c03235077b3a025da4ad681a33244021a5adedd07cab9695223109c0ea650455f7276863bce9dd4b390720ed81ccad0d4455b8247222c8bbf7ce42f7d8f10b5b6c8f65a9bd24f7c4de7b675f3e0b8b7fc1f69a70217ab21d18f630232db83de9667e414ed945e94f71a37e3f13e10039d211764f2711ff6289c"
+  ],
+  "app": {
+    "id": "6c87c1ea-e37d-47b2-8180-57edaefc66cd",
+    "name": "bloom-app",
+    "slug": "bloom-app",
+    "ownerAccount": {
+      "id": "d2658218-c5ed-4d35-94d9-e05d04220f56",
+      "name": "oseji11"
+    }
+  },
+  "distribution": "INTERNAL",
+  "buildProfile": "preview",
+  "appIdentifier": "ng.resilience.bloom",
+  "sdkVersion": "58.0.0",
+  "appVersion": "1.0.0",
+  "appBuildVersion": "5",
+  "gitCommitHash": "2430650c238c8bfb44571b139118822a02b582d1",
+  "gitCommitMessage": "update push notification configuration and build setup",
+  "priority": "NORMAL_PLUS",
+  "createdAt": "2026-11-13T23:03:30.393Z",
+  "updatedAt": "2026-11-13T23:17:13.868Z",
+  "completedAt": "2026-11-13T23:17:13.669Z",
+  "expirationDate": "2026-11-27T23:03:30.417Z",
+  "isForIosSimulator": false,
+  "metrics": {
+    "buildWaitTime": 3787,
+    "buildQueueTime": 5770,
+    "buildDuration": 813719
+  }
+}

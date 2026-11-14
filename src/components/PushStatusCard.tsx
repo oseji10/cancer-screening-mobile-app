@@ -45,7 +45,7 @@ export function PushStatusCard({ accent, register }: { accent: string; register:
       <Text style={s.msg}>{st.message}</Text>
       <View style={s.actions}>
         <Pressable accessibilityRole="button" disabled={busy !== null} onPress={() => void check()} style={[s.btn, { borderColor: accent }]}>
-          {busy === "check" ? <ActivityIndicator size="small" color={accent} /> : <Text style={[s.btnText, { color: accent }]}>{st.ok ? "Check again" : "Turn on"}</Text>}
+          {busy === "check" ? <ActivityIndicator size="small" color={accent} /> : <Text style={[s.btnText, { color: accent }]}>{st.ok ? "Check again" : "Try again"}</Text>}
         </Pressable>
         {st.ok ? (
           <Pressable accessibilityRole="button" disabled={busy !== null} onPress={() => void test()} style={[s.btn, { borderColor: accent }]}>

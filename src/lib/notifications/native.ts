@@ -211,7 +211,9 @@ export async function getPushToken(): Promise<string | null> {
     return pushToken;
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    pushProblem = /FirebaseApp|google-services|FCM|Firebase/i.test(msg)
+    pushProblem = /Expo Go|development build/i.test(msg)
+      ? "You are using Expo Go, which cannot receive phone notifications. Install the Bloom development build and open the app with it."
+      : /FirebaseApp|google-services|FCM|Firebase/i.test(msg)
       ? "Firebase is not set up in this build. Add android.googleServicesFile to app.json and build again."
       : `Could not get a push token: ${msg}`;
     return null;
@@ -248,4 +250,40 @@ export async function setBadge(n: number): Promise<void> {
   } catch {
     // ignore
   }
+}
+
+// ---- Permission gate ------------------------------------------------------------------------------
+
+/** False on the web and in Expo Go, where phone notifications can't work (nothing to ask for). */
+export function pushPossible(): boolean {
+  if (!mod()) return false;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const C = require("expo-constants") as typeof import("expo-constants");
+    return C.default.executionEnvironment !== C.ExecutionEnvironment.StoreClient;
+  } catch {
+    return true;
+  }
+}
+
+/** granted, or whether the phone will still show its own "Allow notifications?" prompt. */
+export async function permissionState(): Promise<{ granted: boolean; canAsk: boolean }> {
+  const N = mod();
+  if (!N) return { granted: true, canAsk: false };
+  try {
+    const p = await N.getPermissionsAsync();
+    return { granted: p.granted, canAsk: p.canAskAgain };
+  } catch {
+    return { granted: true, canAsk: false };
+  }
+}
+
+/** Lets the push registration know the person just allowed notifications, so it registers at once. */
+const grantedListeners = new Set<() => void>();
+export function onPermissionGranted(cb: () => void): () => void {
+  grantedListeners.add(cb);
+  return () => grantedListeners.delete(cb);
+}
+export function emitPermissionGranted(): void {
+  grantedListeners.forEach((cb) => cb());
 }

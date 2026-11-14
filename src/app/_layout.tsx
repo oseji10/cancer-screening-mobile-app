@@ -15,6 +15,7 @@ import { useEffect } from "react";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 
 import { AppLock } from "../components/AppLock";
+import { NotificationGate } from "../components/NotificationGate";
 import { AppointmentsProvider } from "../lib/appointments/AppointmentsContext";
 import { AuthProvider } from "../lib/auth/AuthContext";
 import { NotificationsProvider } from "../lib/notifications/NotificationsContext";
@@ -55,6 +56,7 @@ export default function RootLayout() {
             <TrackProvider>
               <StatusBar style="dark" />
               <Stack screenOptions={{ headerShown: false }} />
+              <NotificationGate />
               <AppLock />
             </TrackProvider>
           </AppointmentsProvider>

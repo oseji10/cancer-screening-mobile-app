@@ -1,12 +1,13 @@
 import { Href, useRouter } from "expo-router";
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { AppState } from "react-native";
 
 import { getItem, setItem } from "../storage/localStore";
 import { useAuth } from "../auth/AuthContext";
 import { useProfile } from "../profile/ProfileContext";
 import { getRole } from "../role";
-import { cancelScheduled, configureNotifications, isPushActive, listenForTaps, notifyNow, onNotificationReceived, Permission, requestPermission, scheduleAt, setBadge } from "./native";
-import { registerWomanPush } from "./push";
+import { cancelScheduled, configureNotifications, isPushActive, listenForTaps, notifyNow, onNotificationReceived, onPermissionGranted, Permission, requestPermission, scheduleAt, setBadge } from "./native";
+import { pushStatus, registerWomanPush } from "./push";
 
 const KEY = "bloom_notifs_v1";
 const MAX_ITEMS = 40;
@@ -115,15 +116,24 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   // in or out (so booking updates follow her account). Skipped on a health worker's phone.
   const { token: authToken } = useAuth();
   const { onboarded } = useProfile();
+  // Also tried again each time the app comes back to the front while it is still off (e.g. she just
+  // allowed notifications in the phone's settings), so nobody has to press anything.
   useEffect(() => {
     if (!onboarded) return;
     let alive = true;
-    void (async () => {
+    const attempt = async () => {
       if ((await getRole()) === "chw" || !alive) return;
       await registerWomanPush();
-    })();
+    };
+    void attempt();
+    const sub = AppState.addEventListener("change", (st) => {
+      if (st === "active" && !pushStatus().ok) void attempt();
+    });
+    const off = onPermissionGranted(() => void attempt());
     return () => {
       alive = false;
+      sub.remove();
+      off();
     };
   }, [onboarded, authToken]);
 

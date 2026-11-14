@@ -5,8 +5,8 @@ import { ApiError } from "../api/client";
 import { config } from "../config";
 import { getItem, removeItem, setItem } from "../storage/localStore";
 import { getNotifications, markNotificationsRead, StaffNotification } from "./access";
-import { isPushActive, notifyNow, onNotificationReceived, setBadge } from "../notifications/native";
-import { registerChwPush, unregisterPush } from "../notifications/push";
+import { isPushActive, notifyNow, onNotificationReceived, onPermissionGranted, setBadge } from "../notifications/native";
+import { pushStatus, registerChwPush, unregisterPush } from "../notifications/push";
 import { CaseDto, chwFetch, ChwUser, clearSession, loadSession, saveSession, signInRequest } from "./api";
 import { ChwCase, Outcome, sampleCases, StepStatus } from "./cases";
 import { onChwSession } from "./sessionEvents";
@@ -231,9 +231,19 @@ export function ChwProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!live || !token) return;
     void registerChwPush(call);
-    return onNotificationReceived(() => {
+    // Still off (permission given later in Settings, no network at sign-in…): try again when the app returns.
+    const sub = AppState.addEventListener("change", (st) => {
+      if (st === "active" && !pushStatus().ok) void registerChwPush(call);
+    });
+    const off = onNotificationReceived(() => {
       void refresh();
     });
+    const offGranted = onPermissionGranted(() => void registerChwPush(call));
+    return () => {
+      sub.remove();
+      off();
+      offGranted();
+    };
   }, [live, token, call, refresh]);
 
   // Number on the app icon = unread bell items.

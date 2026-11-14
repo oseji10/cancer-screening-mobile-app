@@ -4,9 +4,7 @@ import { useCallback, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { PushStatusCard } from "../../../components/PushStatusCard";
 import { fonts } from "../../../constants/theme";
-import { registerChwPush } from "../../../lib/notifications/push";
 import { stageOf } from "../../../lib/chw/cases";
 import { useChw } from "../../../lib/chw/ChwContext";
 import { chw } from "../../../lib/chw/theme";
@@ -16,7 +14,7 @@ import { biometricEnabled, biometricLabel, disableBiometric, useBiometricSupport
 export default function ChwProfile() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { cases, resetSamples, live, user, signOut, request } = useChw();
+  const { cases, resetSamples, live, user, signOut } = useChw();
   const [note, setNote] = useState<string | null>(null);
   const [bioOn, setBioOn] = useState(false);
   const bioSupported = useBiometricSupported();
@@ -69,7 +67,6 @@ export default function ChwProfile() {
           <Row icon="refresh-outline" label="Reset sample cases" onPress={() => void resetSamples().then(() => setNote("Sample cases reset."))} />
         </>
       )}
-      {live ? <PushStatusCard accent={chw.teal} register={() => registerChwPush(request)} /> : null}
       {live && bioSupported ? (
         <Row icon="finger-print" label={`${biometricLabel()[0].toUpperCase()}${biometricLabel().slice(1)} sign-in: ${bioOn ? "On" : "Off"}`} onPress={() => void toggleBio()} />
       ) : null}

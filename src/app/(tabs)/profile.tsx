@@ -4,14 +4,12 @@ import { ComponentProps, useCallback, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { PillButton } from "../../components/PillButton";
-import { PushStatusCard } from "../../components/PushStatusCard";
 import { Screen } from "../../components/Screen";
 import { ScreenHeader } from "../../components/ScreenHeader";
 import { colors, fonts } from "../../constants/theme";
 import { useAuth } from "../../lib/auth/AuthContext";
 import { biometricEnabled, biometricLabel, disableBiometric, useBiometricSupported } from "../../lib/auth/biometric";
 import { config } from "../../lib/config";
-import { registerWomanPush } from "../../lib/notifications/push";
 import { useProfile } from "../../lib/profile/ProfileContext";
 
 type IconName = ComponentProps<typeof Ionicons>["name"];
@@ -70,8 +68,6 @@ export default function Profile() {
         <Text style={styles.name}>{name || "Welcome to Bloom"}</Text>
         {signedIn && account ? <Text style={styles.phone}>{account.phone}</Text> : null}
       </View>
-
-      {config.hasBackend ? <PushStatusCard accent={colors.purple} register={registerWomanPush} /> : null}
 
       {signedIn ? (
         <View style={styles.card}>
