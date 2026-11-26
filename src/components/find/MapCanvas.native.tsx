@@ -1,13 +1,30 @@
+import Constants from "expo-constants";
 import { useEffect, useRef } from "react";
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 
 import { DEFAULT_CENTRE } from "../../lib/find/centres";
 import { MapBubble } from "./MapBubble";
+import OsmMap from "./OsmMap";
 import type { MapCanvasProps } from "./mapTypes";
 
+/**
+ * Google Maps on Android needs an API key in the build; without one the app closes as soon as the map
+ * opens. app.config.js sets extra.hasGoogleMapsKey when GOOGLE_MAPS_ANDROID_API_KEY was provided.
+ * Without a key, Android uses an OpenStreetMap map instead (no key or account needed).
+ * Expo Go has its own Google key, so the Google map is fine there.
+ */
+const androidMapOk =
+  Platform.OS !== "android" ||
+  Constants.executionEnvironment === "storeClient" ||
+  Constants.expoConfig?.extra?.hasGoogleMapsKey === true;
+
+export default function MapCanvas(props: MapCanvasProps) {
+  return androidMapOk ? <RealMap {...props} /> : <OsmMap {...props} />;
+}
+
 /** Real map (Apple Maps on iPhone, Google Maps on Android) with the live blue dot for the person. */
-export default function MapCanvas({ centres, selectedId, user, onSelect, bottomInset, topInset }: MapCanvasProps) {
+function RealMap({ centres, selectedId, user, onSelect, bottomInset, topInset }: MapCanvasProps) {
   const ref = useRef<MapView>(null);
   const fitted = useRef(false);
 
